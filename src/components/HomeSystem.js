@@ -76,6 +76,13 @@ export default function HomeSystem() {
     const response = await fetch('/api/state', { cache: 'no-store' });
     if (!response.ok) throw new Error('Unable to load operations state.');
     const payload = await response.json();
+    const saved = localStorage.getItem('aquanor_knowledge');
+    if (saved) {
+      const overrides = JSON.parse(saved);
+      payload.company = overrides.company ?? payload.company;
+      payload.products = overrides.products ?? payload.products;
+      payload.shipments = overrides.shipments ?? payload.shipments;
+    }
     setOpsState(payload);
   }
 
@@ -287,10 +294,7 @@ export default function HomeSystem() {
                   <div>
                     <p className="text-[14px] font-medium text-[#111]">{product.name}</p>
                     <p className="text-[12px] text-[#999] mt-0.5">
-                      {[
-                        ...(product.origins || []).map(o => o.adjective).filter(Boolean),
-                        ...(product.productionMethods || [])
-                      ].join(' · ')}
+                      {(product.origins || []).map(o => o.adjective).filter(Boolean).join(' · ')}
                     </p>
                   </div>
                   <StatusPill status={product.labelStatus} />

@@ -84,6 +84,19 @@ export default function ConfigPanel() {
     let mounted = true;
     async function load() {
       try {
+        const saved = localStorage.getItem('aquanor_knowledge');
+        if (saved) {
+          const payload = JSON.parse(saved);
+          if (mounted) {
+            setKnowledge({
+              company: payload.company,
+              suppliers: payload.suppliers,
+              products: payload.products,
+              shipments: payload.shipments
+            });
+          }
+          return;
+        }
         const response = await fetch('/api/knowledge', { cache: 'no-store' });
         if (!response.ok) throw new Error('Unable to load configuration.');
         const payload = await response.json();
@@ -201,17 +214,12 @@ export default function ConfigPanel() {
     setKnowledge((prev) => ({ ...prev, company: { ...prev.company, name: value } }));
   }
 
-  async function save() {
+  function save() {
     if (!knowledge) return;
     setSaving(true);
     setError('');
     try {
-      const response = await fetch('/api/knowledge', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(knowledge)
-      });
-      if (!response.ok) throw new Error('Unable to save configuration.');
+      localStorage.setItem('aquanor_knowledge', JSON.stringify(knowledge));
       setMessage('Saved');
       setTimeout(() => setMessage(''), 1800);
     } catch (saveError) {
