@@ -286,7 +286,12 @@ export default function HomeSystem() {
                 >
                   <div>
                     <p className="text-[14px] font-medium text-[#111]">{product.name}</p>
-                    <p className="text-[12px] text-[#999] mt-0.5">{product.species}</p>
+                    <p className="text-[12px] text-[#999] mt-0.5">
+                      {[
+                        ...(product.origins || []).map(o => o.adjective).filter(Boolean),
+                        ...(product.productionMethods || [])
+                      ].join(' · ')}
+                    </p>
                   </div>
                   <StatusPill status={product.labelStatus} />
                 </div>

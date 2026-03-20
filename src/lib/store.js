@@ -8,13 +8,20 @@ function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+// Species retained only as a lookup for compliance engine cross-referencing
 const BASE_SPECIES = [
-  { id: 'SP_COD', name: 'Atlantic cod', scientificName: 'Gadus morhua', simpCovered: true },
-  { id: 'SP_HAD', name: 'Haddock', scientificName: 'Melanogrammus aeglefinus', simpCovered: false },
-  { id: 'SP_CHAR', name: 'Arctic charr', scientificName: 'Salvelinus alpinus', simpCovered: false },
-  { id: 'SP_SAL', name: 'Salmon', scientificName: 'Salmo salar', simpCovered: false },
-  { id: 'SP_OYS', name: 'Oysters (Wianno)', scientificName: 'Crassostrea virginica', simpCovered: false },
-  { id: 'SP_BASS', name: 'Sea bass', scientificName: 'Dicentrarchus labrax', simpCovered: false }
+  { id: 'SP_COD',     name: 'Atlantic Cod',        scientificName: 'Gadus morhua',              simpCovered: true  },
+  { id: 'SP_HAD',     name: 'Haddock',             scientificName: 'Melanogrammus aeglefinus',   simpCovered: false },
+  { id: 'SP_CHAR',    name: 'Arctic Charr',         scientificName: 'Salvelinus alpinus',         simpCovered: false },
+  { id: 'SP_SAL',     name: 'Atlantic Salmon',      scientificName: 'Salmo salar',               simpCovered: false },
+  { id: 'SP_SAL_LB',  name: 'Landbased Salmon',     scientificName: 'Salmo salar',               simpCovered: false },
+  { id: 'SP_OYS',     name: 'Oysters (WiAnno)',     scientificName: 'Crassostrea virginica',      simpCovered: false },
+  { id: 'SP_BASS',    name: 'Branzino',             scientificName: 'Dicentrarchus labrax',       simpCovered: false },
+  { id: 'SP_HAL',     name: 'Halibut',              scientificName: 'Hippoglossus hippoglossus',  simpCovered: true  },
+  { id: 'SP_DAU',     name: 'Daurade',              scientificName: 'Sparus aurata',              simpCovered: false },
+  { id: 'SP_SOLE',    name: 'Dover Sole',           scientificName: 'Solea solea',                simpCovered: false },
+  { id: 'SP_SAITHE',  name: 'Saithe',              scientificName: 'Pollachius virens',           simpCovered: false },
+  { id: 'SP_WOLF',    name: 'Wolffish',             scientificName: 'Anarhichas lupus',           simpCovered: false }
 ];
 
 const BASE_KNOWLEDGE = {
@@ -23,7 +30,8 @@ const BASE_KNOWLEDGE = {
     systemName: 'Aquanor Command',
     importerOfRecord: 'Aquanor US IOR-4472',
     headquarters: 'Boston, MA',
-    operatingRegions: 'US Northeast, Iceland lane, Canada lane'
+    operatingRegions: ['United States', 'Iceland', 'Canada'],
+    roles: ['Producer', 'Importer', 'Distributor']
   },
   suppliers: [
     { id: 'SUP1', name: 'Samherji', country: 'Iceland' },
@@ -47,36 +55,197 @@ const BASE_KNOWLEDGE = {
   products: [
     {
       id: 'P1',
-      name: 'Atlantic Cod Fillet',
-      speciesId: 'SP_COD',
-      productionMethod: 'Wild-caught',
-      label: {
-        scientificName: '',
-        catchMethod: '',
-        originFormat: 'Iceland'
-      },
-      labelStatus: 'Compliant',
-      statusExplanation: 'No active compliance blockers',
-      relatedEventId: null
+      commonName: 'Arctic Charr', scientificName: 'Salvelinus alpinus',
+      speciesGroup: 'Salmonidae', speciesType: 'finfish', speciesId: 'SP_CHAR',
+      formats: [
+        { name: 'Whole',  presentations: ['Head-on'] },
+        { name: 'Fillet', presentations: ['PBO', 'Skin-on', 'C-trim'] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Farmed'],
+      origins: [{ country: 'Iceland', countryCode: 'IS' }],
+      label: { scientificName: 'Salvelinus alpinus', catchMethod: 'Aquaculture harvest', originFormat: 'IS' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
     },
     {
       id: 'P2',
-      name: 'Salmon Portions',
-      speciesId: 'SP_SAL',
-      productionMethod: 'Farmed',
-      label: {
-        scientificName: 'Salmo salar',
-        catchMethod: 'Aquaculture harvest',
-        originFormat: REQUIRED_ORIGIN_FORMAT
-      },
-      labelStatus: 'Compliant',
-      statusExplanation: 'No active compliance blockers',
-      relatedEventId: null
+      commonName: 'Atlantic Cod', scientificName: 'Gadus morhua',
+      speciesGroup: 'Gadidae', speciesType: 'finfish', speciesId: 'SP_COD',
+      formats: [
+        { name: 'Loin',        presentations: [] },
+        { name: 'Fillet',      presentations: ['Skinless / PBI', 'Skin-on / PBI', 'Skinless / PBO'] },
+        { name: 'Back Fillet', presentations: [] },
+        { name: 'Portion',     presentations: [] },
+        { name: 'Tail',        presentations: [] },
+        { name: 'Tongue',      presentations: [] },
+        { name: 'Block',       presentations: [] },
+        { name: 'Mince',       presentations: [] }
+      ],
+      processingStates: ['Fresh', 'Frozen'],
+      productionMethods: ['Wild-caught'],
+      origins: [
+        { country: 'Iceland', countryCode: 'IS' },
+        { country: 'Barents Sea / EU Fleet', countryCode: '' }
+      ],
+      label: { scientificName: 'Gadus morhua', catchMethod: 'Trawl / Longline', originFormat: 'IS' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P3',
+      commonName: 'Haddock', scientificName: 'Melanogrammus aeglefinus',
+      speciesGroup: 'Gadidae', speciesType: 'finfish', speciesId: 'SP_HAD',
+      formats: [
+        { name: 'Loin',        presentations: [] },
+        { name: 'Fillet',      presentations: ['Skinless / PBI', 'Skin-on / PBI', 'Skinless / PBO'] },
+        { name: 'Back Fillet', presentations: [] },
+        { name: 'Portion',     presentations: [] },
+        { name: 'Tail',        presentations: [] },
+        { name: 'Tongue',      presentations: [] },
+        { name: 'Block',       presentations: [] },
+        { name: 'Mince',       presentations: [] }
+      ],
+      processingStates: ['Fresh', 'Frozen'],
+      productionMethods: ['Wild-caught'],
+      origins: [
+        { country: 'Iceland', countryCode: 'IS' },
+        { country: 'Barents Sea / EU Fleet', countryCode: '' }
+      ],
+      label: { scientificName: 'Melanogrammus aeglefinus', catchMethod: 'Trawl / Longline', originFormat: 'IS' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P4',
+      commonName: 'WiAnno Oysters', scientificName: 'Crassostrea virginica',
+      speciesGroup: 'Ostreidae', speciesType: 'shellfish', speciesId: 'SP_OYS',
+      formats: [
+        { name: 'Live', presentations: ['3"', '2.5-3"'] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Farmed'],
+      origins: [{ country: 'United States', countryCode: 'US' }],
+      label: { scientificName: 'Crassostrea virginica', catchMethod: 'Aquaculture harvest', originFormat: 'US' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P5',
+      commonName: 'Landbased Salmon', scientificName: 'Salmo salar',
+      speciesGroup: 'Salmonidae', speciesType: 'finfish', speciesId: 'SP_SAL_LB',
+      formats: [
+        { name: 'Whole',  presentations: [] },
+        { name: 'Fillet', presentations: [] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Farmed'],
+      origins: [{ country: 'Iceland', countryCode: 'IS' }],
+      label: { scientificName: 'Salmo salar', catchMethod: 'Aquaculture harvest', originFormat: 'IS' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P6',
+      commonName: 'Branzino', scientificName: 'Dicentrarchus labrax',
+      speciesGroup: 'Moronidae', speciesType: 'finfish', speciesId: 'SP_BASS',
+      formats: [
+        { name: 'Whole', presentations: ['Whole Round'] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Farmed'],
+      origins: [{ country: 'Greece', countryCode: 'GR' }],
+      label: { scientificName: 'Dicentrarchus labrax', catchMethod: 'Aquaculture harvest', originFormat: 'GR' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P7',
+      commonName: 'Atlantic Salmon', scientificName: 'Salmo salar',
+      speciesGroup: 'Salmonidae', speciesType: 'finfish', speciesId: 'SP_SAL',
+      formats: [
+        { name: 'Whole',  presentations: ['Head-on', 'Gutted'] },
+        { name: 'Fillet', presentations: ['PBO', 'Skin-on', 'Scaled'] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Farmed'],
+      origins: [{ country: 'Norway', countryCode: 'NO' }],
+      label: { scientificName: 'Salmo salar', catchMethod: 'Aquaculture harvest', originFormat: 'NO' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P8',
+      commonName: 'Halibut', scientificName: 'Hippoglossus hippoglossus',
+      speciesGroup: 'Pleuronectidae', speciesType: 'finfish', speciesId: 'SP_HAL',
+      formats: [
+        { name: 'Whole', presentations: [] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Wild-caught'],
+      origins: [{ country: 'Norway', countryCode: 'NO' }],
+      label: { scientificName: 'Hippoglossus hippoglossus', catchMethod: 'Longline', originFormat: 'NO' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P9',
+      commonName: 'Daurade', scientificName: 'Sparus aurata',
+      speciesGroup: 'Sparidae', speciesType: 'finfish', speciesId: 'SP_DAU',
+      formats: [
+        { name: 'Whole', presentations: ['Whole Round'] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Farmed'],
+      origins: [{ country: 'Greece', countryCode: 'GR' }],
+      label: { scientificName: 'Sparus aurata', catchMethod: 'Aquaculture harvest', originFormat: 'GR' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P10',
+      commonName: 'Dover Sole', scientificName: 'Solea solea',
+      speciesGroup: 'Soleidae', speciesType: 'finfish', speciesId: 'SP_SOLE',
+      formats: [
+        { name: 'Whole', presentations: ['Head-on', 'Gutted'] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Wild-caught'],
+      origins: [{ country: 'Netherlands', countryCode: 'NL' }],
+      label: { scientificName: 'Solea solea', catchMethod: 'Trawl', originFormat: 'NL' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P11',
+      commonName: 'Saithe', scientificName: 'Pollachius virens',
+      speciesGroup: 'Gadidae', speciesType: 'finfish', speciesId: 'SP_SAITHE',
+      formats: [
+        { name: 'Loin',        presentations: [] },
+        { name: 'Fillet',      presentations: ['Skinless / PBI', 'Skin-on / PBI', 'Skinless / PBO'] },
+        { name: 'Back Fillet', presentations: [] },
+        { name: 'Loin Cut',    presentations: [] },
+        { name: 'Tail',        presentations: [] },
+        { name: 'Block',       presentations: [] },
+        { name: 'Mince',       presentations: [] }
+      ],
+      processingStates: ['Fresh', 'Frozen'],
+      productionMethods: ['Wild-caught'],
+      origins: [
+        { country: 'Iceland', countryCode: 'IS' },
+        { country: 'Barents Sea / EU Fleet', countryCode: '' }
+      ],
+      label: { scientificName: 'Pollachius virens', catchMethod: 'Trawl / Longline', originFormat: 'IS' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
+    },
+    {
+      id: 'P12',
+      commonName: 'Wolffish', scientificName: 'Anarhichas lupus',
+      speciesGroup: 'Anarhichadidae', speciesType: 'finfish', speciesId: 'SP_WOLF',
+      formats: [
+        { name: 'Fillet', presentations: ['Skinless', 'Boneless', 'Fully trimmed'] }
+      ],
+      processingStates: ['Fresh'],
+      productionMethods: ['Wild-caught'],
+      origins: [{ country: 'Iceland', countryCode: 'IS' }],
+      label: { scientificName: 'Anarhichas lupus', catchMethod: 'Longline', originFormat: 'IS' },
+      labelStatus: 'Compliant', statusExplanation: 'No active compliance blockers', relatedEventId: null
     }
   ],
   supplierProducts: [
     { id: 'SPM1', supplierId: 'SUP1', productId: 'P1' },
-    { id: 'SPM2', supplierId: 'SUP1', productId: 'P2' }
+    { id: 'SPM2', supplierId: 'SUP1', productId: 'P2' },
+    { id: 'SPM3', supplierId: 'SUP1', productId: 'P3' }
   ],
   shipments: [
     {
@@ -363,18 +532,40 @@ function mapShipmentView(shipment) {
   };
 }
 
+const COUNTRY_ADJECTIVES = {
+  'Iceland': 'Icelandic', 'Norway': 'Norwegian', 'Canada': 'Canadian',
+  'United States': 'American', 'United Kingdom': 'British', 'UK': 'British',
+  'Spain': 'Spanish', 'France': 'French', 'Portugal': 'Portuguese',
+  'Germany': 'German', 'Poland': 'Polish', 'Faroe Islands': 'Faroese',
+  'Denmark': 'Danish', 'Sweden': 'Swedish', 'Finland': 'Finnish',
+  'Russia': 'Russian', 'Japan': 'Japanese', 'Chile': 'Chilean',
+  'Peru': 'Peruvian', 'China': 'Chinese', 'Ireland': 'Irish',
+  'Scotland': 'Scottish', 'Greenland': 'Greenlandic',
+};
+
+function countryToAdjective(name) {
+  return COUNTRY_ADJECTIVES[name] || name;
+}
+
 function mapProductView(product) {
-  const species = findSpeciesById(product.speciesId);
   const supplierNames = state.knowledge.supplierProducts
     .filter((edge) => edge.productId === product.id)
     .map((edge) => findSupplierById(edge.supplierId)?.name)
     .filter(Boolean);
 
+  const displayName = product.commonName || 'Unknown product';
+
   return {
     id: product.id,
-    name: product.name,
-    species: species?.name || 'Unknown species',
-    productionMethod: product.productionMethod,
+    name: displayName,
+    commonName: product.commonName,
+    scientificName: product.scientificName,
+    speciesGroup: product.speciesGroup,
+    speciesType: product.speciesType,
+    formats: Array.isArray(product.formats) ? product.formats : [],
+    processingStates: Array.isArray(product.processingStates) ? product.processingStates : (product.processingState ? [product.processingState] : []),
+    productionMethods: Array.isArray(product.productionMethods) ? product.productionMethods : (product.productionMethod ? [product.productionMethod] : []),
+    origins: Array.isArray(product.origins) ? product.origins.map(o => ({ ...o, adjective: countryToAdjective(o.country) })) : (product.originCountry ? [{ country: '', countryCode: product.originCountry, adjective: product.originCountry }] : []),
     suppliers: supplierNames,
     labelStatus: product.labelStatus,
     statusExplanation: product.statusExplanation,
@@ -449,7 +640,7 @@ function mapImpactShipments(impact) {
   return impact.affectedShipments.map((shipment) => {
     const supplier = findSupplierById(shipment.supplierId);
     const items = state.knowledge.shipmentItems.filter((item) => item.shipmentId === shipment.id);
-    const productNames = items.map((item) => findProductById(item.productId)?.name).filter(Boolean);
+    const productNames = items.map((item) => findProductById(item.productId)?.commonName).filter(Boolean);
 
     return {
       id: shipment.id,
@@ -467,10 +658,13 @@ function mapImpactProducts(impact) {
     const species = findSpeciesById(product.speciesId);
     const nonCompliant = impact.nonCompliantProducts.find((item) => item.id === product.id);
 
+    const formatNames = Array.isArray(product.formats) ? product.formats.map(f => f.name) : [];
+    const formatLabel = formatNames.length > 2 ? formatNames.slice(0, 2).join(' / ') + ` +${formatNames.length - 2}` : formatNames.join(' / ');
+    const displayName = [product.commonName, formatLabel].filter(Boolean).join(' — ') || product.commonName || 'Unknown product';
     return {
       id: product.id,
-      name: product.name,
-      species: species?.name || 'Unknown species',
+      name: displayName,
+      species: product.commonName || species?.name || 'Unknown species',
       labelStatus: product.labelStatus,
       missingFields: nonCompliant?.missing || [],
       explanation: product.statusExplanation
@@ -564,17 +758,45 @@ export function updateKnowledge(nextKnowledge) {
     locations: normalizeArrayRows(nextKnowledge.locations ?? current.locations, 'LOC'),
     certifications: normalizeArrayRows(nextKnowledge.certifications ?? current.certifications, 'CERT'),
     species: nextSpecies,
-    products: nextProducts.map((product) => ({
-      ...product,
-      label: {
-        scientificName: product.label?.scientificName || '',
-        catchMethod: product.label?.catchMethod || '',
-        originFormat: product.label?.originFormat || ''
-      },
-      labelStatus: 'Compliant',
-      statusExplanation: 'No active compliance blockers',
-      relatedEventId: null
-    })),
+    products: nextProducts.map((product) => {
+      const {
+        formFactor: _ff, processingState: _ps, productionMethod: _pm,
+        originCountry: _oc, originDetail: _od,
+        presentation: _presentationStr,
+        formFactors: _oldFormFactors, presentations: _oldPresentations,
+        ...cleanProduct
+      } = product;
+
+      const formats = Array.isArray(product.formats) && product.formats.length > 0
+        ? product.formats
+        : (_oldFormFactors || []).map(name => ({ name, presentations: [] }))
+          .concat(_ff ? [{ name: _ff, presentations: [] }] : []);
+
+      const processingStates = Array.isArray(product.processingStates) ? product.processingStates : (_ps ? [_ps.charAt(0).toUpperCase() + _ps.slice(1)] : []);
+      const productionMethods = Array.isArray(product.productionMethods) ? product.productionMethods : (_pm ? [_pm] : []);
+      const origins = Array.isArray(product.origins) ? product.origins
+        : (_oc ? [{ country: _od || '', countryCode: _oc }] : []);
+      const originFormat = origins[0]?.countryCode || product.label?.originFormat || '';
+
+      return {
+        ...cleanProduct,
+        formats,
+        processingStates,
+        productionMethods,
+        origins,
+        speciesId: product.speciesId || current.species.find(
+          (sp) => sp.scientificName === product.scientificName
+        )?.id || null,
+        label: {
+          scientificName: product.scientificName || product.label?.scientificName || '',
+          catchMethod: product.label?.catchMethod || '',
+          originFormat
+        },
+        labelStatus: 'Compliant',
+        statusExplanation: 'No active compliance blockers',
+        relatedEventId: null
+      };
+    }),
     supplierProducts: normalizeArrayRows(nextKnowledge.supplierProducts ?? current.supplierProducts, 'SPM'),
     shipments: nextShipments.map((shipment) => ({
       ...shipment,
