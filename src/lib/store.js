@@ -271,7 +271,8 @@ const BASE_KNOWLEDGE = {
     }
   ],
   shipmentItems: [
-    { id: 'SI1', shipmentId: 'S1', productId: 'P1', quantityKg: 2200 }
+    { id: 'SI1', shipmentId: 'S1', productId: 'P1', quantityKg: 2200 },
+    { id: 'SI2', shipmentId: 'S1', productId: 'P2', quantityKg: 1800 }
   ]
 };
 
