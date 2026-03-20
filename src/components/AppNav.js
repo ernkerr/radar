@@ -15,7 +15,7 @@ export default function AppNav() {
         </div>
         <button
           onClick={() => router.push('/config')}
-          className="text-gray-400 hover:text-black transition-colors"
+          className="text-black hover:text-black transition-colors"
           title="Configuration"
           aria-label="Configuration"
         >
