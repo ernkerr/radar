@@ -4,6 +4,21 @@ All significant codebase changes are documented here.
 
 ---
 
+## 2026-04-05 — Database Schema & RLS Policies
+
+**What changed:**
+- Added initial Supabase migration (`supabase/migrations/001_initial_schema.sql`) with 13 tables covering the full data model
+- Added RLS policies migration (`supabase/migrations/002_rls_policies.sql`) for multi-tenancy isolation via `company_id`
+- Seeded three default regulatory sources (Federal Register, FDA Import Alerts, NOAA SIMP)
+
+**Tables:** companies, users, suppliers, products, shipments, sources, raw_documents, ingestion_log, changes, alerts, actions, approvals, executions, audit_log
+
+**Decisions referenced:** D2 (multi-tenant from day 1), D13 (company_id naming)
+
+**Why:** Foundation for all data storage. RLS ensures company A can never see company B's data at the database level.
+
+---
+
 ## 2026-04-04 — P0 Scaffold: Frontend, Workers, Ingestion
 
 **What changed:**
