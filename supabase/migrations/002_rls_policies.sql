@@ -24,7 +24,7 @@ alter table audit_log enable row level security;
 -- HELPER: get current user's company_id
 -- ============================================================
 
-create or replace function auth.company_id()
+create or replace function public.get_company_id()
 returns uuid as $$
   select company_id from public.users where id = auth.uid()
 $$ language sql security definer stable;
@@ -36,72 +36,72 @@ $$ language sql security definer stable;
 -- Companies: users can only see their own company
 create policy "Users can view own company"
   on companies for select
-  using (id = auth.company_id());
+  using (id = public.get_company_id());
 
 -- Users: can see other users in their company
 create policy "Users can view company members"
   on users for select
-  using (company_id = auth.company_id());
+  using (company_id = public.get_company_id());
 
 -- Suppliers: full CRUD scoped to company
 create policy "Company suppliers select"
-  on suppliers for select using (company_id = auth.company_id());
+  on suppliers for select using (company_id = public.get_company_id());
 create policy "Company suppliers insert"
-  on suppliers for insert with check (company_id = auth.company_id());
+  on suppliers for insert with check (company_id = public.get_company_id());
 create policy "Company suppliers update"
-  on suppliers for update using (company_id = auth.company_id());
+  on suppliers for update using (company_id = public.get_company_id());
 create policy "Company suppliers delete"
-  on suppliers for delete using (company_id = auth.company_id());
+  on suppliers for delete using (company_id = public.get_company_id());
 
 -- Products: full CRUD scoped to company
 create policy "Company products select"
-  on products for select using (company_id = auth.company_id());
+  on products for select using (company_id = public.get_company_id());
 create policy "Company products insert"
-  on products for insert with check (company_id = auth.company_id());
+  on products for insert with check (company_id = public.get_company_id());
 create policy "Company products update"
-  on products for update using (company_id = auth.company_id());
+  on products for update using (company_id = public.get_company_id());
 create policy "Company products delete"
-  on products for delete using (company_id = auth.company_id());
+  on products for delete using (company_id = public.get_company_id());
 
 -- Shipments: full CRUD scoped to company
 create policy "Company shipments select"
-  on shipments for select using (company_id = auth.company_id());
+  on shipments for select using (company_id = public.get_company_id());
 create policy "Company shipments insert"
-  on shipments for insert with check (company_id = auth.company_id());
+  on shipments for insert with check (company_id = public.get_company_id());
 create policy "Company shipments update"
-  on shipments for update using (company_id = auth.company_id());
+  on shipments for update using (company_id = public.get_company_id());
 create policy "Company shipments delete"
-  on shipments for delete using (company_id = auth.company_id());
+  on shipments for delete using (company_id = public.get_company_id());
 
 -- Changes: read-only for company users (system writes these)
 create policy "Company changes select"
-  on changes for select using (company_id = auth.company_id());
+  on changes for select using (company_id = public.get_company_id());
 
 -- Alerts: read + update (acknowledge/resolve) scoped to company
 create policy "Company alerts select"
-  on alerts for select using (company_id = auth.company_id());
+  on alerts for select using (company_id = public.get_company_id());
 create policy "Company alerts update"
-  on alerts for update using (company_id = auth.company_id());
+  on alerts for update using (company_id = public.get_company_id());
 
 -- Actions: read + update (approve/reject) scoped to company
 create policy "Company actions select"
-  on actions for select using (company_id = auth.company_id());
+  on actions for select using (company_id = public.get_company_id());
 create policy "Company actions update"
-  on actions for update using (company_id = auth.company_id());
+  on actions for update using (company_id = public.get_company_id());
 
 -- Approvals: users can view and create approvals for their company's actions
 create policy "Company approvals select"
   on approvals for select
-  using (action_id in (select id from actions where company_id = auth.company_id()));
+  using (action_id in (select id from actions where company_id = public.get_company_id()));
 create policy "Company approvals insert"
   on approvals for insert
-  with check (action_id in (select id from actions where company_id = auth.company_id()));
+  with check (action_id in (select id from actions where company_id = public.get_company_id()));
 
 -- Executions: read-only for company users
 create policy "Company executions select"
   on executions for select
-  using (action_id in (select id from actions where company_id = auth.company_id()));
+  using (action_id in (select id from actions where company_id = public.get_company_id()));
 
 -- Audit log: read-only for company users
 create policy "Company audit select"
-  on audit_log for select using (company_id = auth.company_id());
+  on audit_log for select using (company_id = public.get_company_id());
