@@ -140,11 +140,47 @@ audit_log (id, company_id, user_id, entity_type, entity_id,
 - **What to capture**: Document type (rule, proposed rule, notice), title, abstract, dates, agencies
 - **Relevance matching**: LLM analysis of abstract against company context
 
-### Additional Sources (P1+)
-- FDA CSMS messages (if API available)
-- FDA GovDelivery email subscriptions
-- CBP Withhold Release Orders (page monitoring)
-- NOAA MMPA Import Provisions
+### FDA RSS Feeds
+- **URLs**: Food Safety Recalls + Outbreaks RSS feeds
+- **Method**: RSS/Atom (feedparser)
+- **Schedule**: Every 1 hour
+- **What to capture**: Recall title, summary, link, publish date
+
+### CBP Withhold Release Orders
+- **URL**: https://www.cbp.gov/newsroom/stats/trade/withhold-release-orders-findings-dashboard
+- **Method**: Page monitoring + table extraction
+- **Schedule**: Every 6 hours
+- **What to capture**: Active WROs, affected companies/products/countries
+
+### NOAA MMPA Import Provisions
+- **URL**: Bycatch criteria + 2025 comparability findings pages
+- **Method**: Page monitoring
+- **Schedule**: Every 12 hours
+- **What to capture**: Comparability findings by country/fishery, import bans
+
+### USDA FSIS Recall API
+- **API**: https://www.fsis.usda.gov/science-data/developer-resources/recall-api
+- **Method**: REST API (JSON, no auth)
+- **Schedule**: Every 2 hours
+- **What to capture**: Recall number, product, reason, classification, date
+
+### Health Canada Recalls RSS
+- **URL**: https://recalls-rappels.canada.ca/en/rss-feeds
+- **Method**: RSS feed
+- **Schedule**: Every 2 hours
+- **What to capture**: Fish/seafood recalls, allergen alerts from Canadian suppliers
+
+### NOAA Fisheries RSS
+- **URL**: https://www.noaa.gov/rss-feeds (fisheries topic feeds)
+- **Method**: RSS feed
+- **Schedule**: Every 2 hours
+- **What to capture**: Fishery closures, enforcement updates, trade advisories
+
+### Deferred Sources
+- FDA CSMS messages (email-only, no public API)
+- FDA Import Refusals Dashboard (high value, needs scraping — fragile)
+- EU RASFF (only if EU suppliers, unclear API ecosystem)
+- EPA Fish Advisories (annual updates, low priority)
 
 ---
 
