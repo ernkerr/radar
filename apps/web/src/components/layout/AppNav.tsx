@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Radar, Settings, Bell, ShieldCheck, Zap } from "lucide-react";
+import { Radar, Settings, Bell, ShieldCheck, Zap, LogOut } from "lucide-react";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Radar },
@@ -13,6 +14,7 @@ const navItems = [
 
 export function AppNav() {
   const pathname = usePathname();
+  const { user, signOut } = useAuth();
 
   return (
     <header className="bg-white border-b border-[var(--border)]">
@@ -41,6 +43,20 @@ export function AppNav() {
               );
             })}
           </nav>
+        </div>
+        <div className="flex items-center gap-3">
+          {user && (
+            <>
+              <span className="text-xs text-[var(--muted-foreground)]">{user.email}</span>
+              <button
+                onClick={signOut}
+                className="flex items-center gap-1 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sign out
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>
