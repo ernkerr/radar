@@ -336,6 +336,39 @@ def fetch_noaa_mmpa():
 
 
 # ============================================================
+# USDA FSIS RECALLS
+# ============================================================
+
+FSIS_URL = "https://www.fsis.usda.gov/recalls"
+FSIS_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
+
+
+def fetch_usda_fsis():
+    print(f"  Page: {FSIS_URL}")
+    resp = httpx.get(FSIS_URL, headers=FSIS_HEADERS, timeout=30, follow_redirects=True)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "lxml")
+    main = soup.find("main") or soup
+    content = main.get_text(separator="\n", strip=True)
+
+    # Extract individual recall teasers if possible
+    teasers = soup.find_all("div", class_="recall-teaser__grid")
+    print(f"  Found {len(teasers)} recall teasers")
+
+    records = [{
+        "external_id": FSIS_URL,
+        "raw_content": content,
+        "metadata_json": {
+            "url": FSIS_URL,
+            "label": "USDA FSIS Recalls & Public Health Alerts",
+            "html_length": len(resp.text),
+            "recall_count": len(teasers),
+        },
+    }]
+    return records
+
+
+# ============================================================
 # MAIN
 # ============================================================
 
@@ -346,6 +379,7 @@ SOURCES = {
     "fda_rss": fetch_fda_rss,
     "cbp_wro": fetch_cbp_wro,
     "noaa_mmpa": fetch_noaa_mmpa,
+    "usda_fsis": fetch_usda_fsis,
 }
 
 if __name__ == "__main__":

@@ -66,13 +66,13 @@ Decisions made during planning and development. Check this before executing on a
 - **Date**: 2026-04-04
 - **Decision**: Maintain `FILE_STRUCTURE.md` at the project root with annotated directory structure. Update it whenever the project structure changes.
 
-### D15: 9 regulatory sources for MVP, 4 deferred
-- **Date**: 2026-04-05
-- **Decision**: MVP includes 9 sources across 3 methods:
-  - **APIs**: Federal Register, openFDA enforcement, USDA FSIS recalls
-  - **RSS**: FDA Food Safety Recalls, FDA Outbreaks, Health Canada Recalls, NOAA Fisheries
-  - **Page monitoring**: NOAA SIMP, CBP WROs, NOAA MMPA
-  - **Deferred**: FDA CSMS (email-only), FDA Import Refusals (fragile scraping), EU RASFF (unclear API), EPA Fish Advisories (annual/low priority)
+### D15: 7 regulatory sources for MVP, 6 deferred
+- **Date**: 2026-04-05 (updated 2026-04-06)
+- **Decision**: MVP includes 7 sources across 3 methods:
+  - **APIs**: Federal Register, openFDA enforcement
+  - **RSS**: FDA Food Safety Recalls, FDA Outbreaks
+  - **Page monitoring**: NOAA SIMP, CBP WROs, NOAA MMPA, USDA FSIS Recalls
+  - **Deferred**: FDA CSMS (email-only), FDA Import Refusals (fragile scraping), EU RASFF (unclear API), EPA Fish Advisories (annual/low priority), Health Canada (not relevant for US imports), NOAA Fisheries RSS (no RSS available, JS-rendered)
 
 ### D16: FDA switched from HTML scraping to openFDA API
 - **Date**: 2026-04-05

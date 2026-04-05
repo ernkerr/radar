@@ -164,23 +164,19 @@ audit_log (id, company_id, user_id, entity_type, entity_id,
 - **Schedule**: Every 2 hours
 - **What to capture**: Recall number, product, reason, classification, date
 
-### Health Canada Recalls RSS
-- **URL**: https://recalls-rappels.canada.ca/en/rss-feeds
-- **Method**: RSS feed
+### USDA FSIS Recalls
+- **URL**: https://www.fsis.usda.gov/recalls
+- **Method**: Page monitoring (requires User-Agent header)
 - **Schedule**: Every 2 hours
-- **What to capture**: Fish/seafood recalls, allergen alerts from Canadian suppliers
-
-### NOAA Fisheries RSS
-- **URL**: https://www.noaa.gov/rss-feeds (fisheries topic feeds)
-- **Method**: RSS feed
-- **Schedule**: Every 2 hours
-- **What to capture**: Fishery closures, enforcement updates, trade advisories
+- **What to capture**: Recall teasers, public health alerts, product/reason/classification
 
 ### Deferred Sources
 - FDA CSMS messages (email-only, no public API)
 - FDA Import Refusals Dashboard (high value, needs scraping — fragile)
 - EU RASFF (only if EU suppliers, unclear API ecosystem)
 - EPA Fish Advisories (annual updates, low priority)
+- Health Canada Recalls (not relevant for US imports)
+- NOAA Fisheries RSS (no RSS available, JS-rendered pages)
 
 ---
 
