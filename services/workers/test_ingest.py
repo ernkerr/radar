@@ -155,43 +155,44 @@ def fetch_noaa_simp():
 
 
 # ============================================================
-# FDA IMPORT ALERTS
+# FDA IMPORT ALERTS (via openFDA API)
 # ============================================================
 
-FDA_BASE = "https://www.fda.gov"
-FDA_INDEX = "https://www.fda.gov/industry/import-alerts/import-alert-16"
+FDA_API = "https://api.fda.gov/food/enforcement.json"
+FDA_SEARCH_TERMS = ["seafood", "fish", "shrimp", "salmon", "cod", "tuna",
+                    "crab", "lobster", "oyster", "shellfish", "squid"]
 
 
 def fetch_fda_import_alerts():
     records = []
-    print(f"  Index: {FDA_INDEX}")
-    resp = httpx.get(FDA_INDEX, timeout=30, follow_redirects=True)
+    search_query = " OR ".join(f'product_description:"{t}"' for t in FDA_SEARCH_TERMS)
+    print(f"  Querying openFDA enforcement API...")
+
+    resp = httpx.get(FDA_API, params={
+        "search": search_query,
+        "limit": 100,
+        "sort": "report_date:desc",
+    }, timeout=30)
     resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, "lxml")
+    data = resp.json()
 
-    alert_links = []
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        if "/import-alert/" in href and "16-" in a.get_text():
-            full_url = href if href.startswith("http") else f"{FDA_BASE}{href}"
-            alert_links.append({"url": full_url, "title": a.get_text(strip=True)})
-
-    print(f"  Found {len(alert_links)} alert links")
-    for link in alert_links[:10]:  # Limit to 10 for testing
-        try:
-            print(f"    Fetching: {link['title'][:50]}")
-            detail = httpx.get(link["url"], timeout=30, follow_redirects=True)
-            detail.raise_for_status()
-            records.append({
-                "external_id": link["url"],
-                "raw_content": detail.text,
-                "metadata_json": {
-                    "title": link["title"],
-                    "url": link["url"],
-                },
-            })
-        except httpx.HTTPError:
-            continue
+    print(f"  Total matching: {data['meta']['results']['total']}")
+    for r in data.get("results", []):
+        records.append({
+            "external_id": r.get("recall_number"),
+            "raw_content": json.dumps(r),
+            "metadata_json": {
+                "product_description": r.get("product_description", "")[:200],
+                "reason_for_recall": r.get("reason_for_recall", "")[:200],
+                "report_date": r.get("report_date"),
+                "classification": r.get("classification"),
+                "status": r.get("status"),
+                "recalling_firm": r.get("recalling_firm"),
+                "city": r.get("city"),
+                "state": r.get("state"),
+                "country": r.get("country"),
+            },
+        })
     return records
 
 
