@@ -4,6 +4,19 @@ All significant codebase changes are documented here.
 
 ---
 
+## 2026-04-06 — Auth, Config CRUD, Live Dashboard
+
+**What changed:**
+- Supabase Auth: login, signup, middleware, session handling
+- Config page wired to Supabase: company info (save), suppliers (CRUD), products (CRUD), sources (read)
+- Dashboard shows real data: company name, source count, recent ingested documents table
+- USDA FSIS Recalls added as 7th ingestion source
+- AppNav shows user email + sign out
+
+**Why:** P0 is now functionally complete. The system ingests real regulatory data, stores it in a multi-tenant database, and surfaces it through an authenticated UI with company-scoped configuration.
+
+---
+
 ## 2026-04-06 — Auth + 7th Source (USDA FSIS)
 
 **What changed:**
