@@ -4,6 +4,30 @@ All significant codebase changes are documented here.
 
 ---
 
+## 2026-04-05 — All 6 Regulatory Sources Live
+
+**What changed:**
+- Added 3 new ingestion sources: FDA RSS Feeds, CBP Withhold Release Orders, NOAA MMPA Import Provisions
+- Switched FDA ingester from broken HTML scraping to openFDA enforcement API
+- Fixed NOAA SIMP URLs (species list was 404, replaced with Essential Forms + Facts & Reports)
+- Fixed NOAA MMPA URL (import provisions rule was 404, replaced with bycatch criteria page)
+- Refactored test_ingest.py to support all sources: `python test_ingest.py [source|all]`
+- All 6 sources tested and ingesting into Supabase
+
+**Sources now live:**
+| Source | Method | Records |
+|--------|--------|---------|
+| Federal Register | REST API | 96 |
+| FDA Import Alerts | openFDA API | 5 |
+| NOAA SIMP | Page monitoring (3 pages) | 3 |
+| FDA RSS Feeds | RSS (2 feeds) | 40 |
+| CBP Withhold Release Orders | Page monitoring | 1 |
+| NOAA MMPA Import Provisions | Page monitoring (2 pages) | 2 |
+
+**Why:** Building all ingesters now means the change detection and relevance engine will be designed against the full variety of data formats (JSON APIs, RSS/XML, HTML page content).
+
+---
+
 ## 2026-04-05 — Database Schema & RLS Policies
 
 **What changed:**
