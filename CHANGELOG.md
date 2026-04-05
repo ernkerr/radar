@@ -4,6 +4,19 @@ All significant codebase changes are documented here.
 
 ---
 
+## 2026-04-06 — Auth + 7th Source (USDA FSIS)
+
+**What changed:**
+- Added Supabase Auth: login, signup, middleware, session handling
+- Signup creates company + user record (multi-tenant from day 1, D2)
+- Middleware protects all routes except /login and /signup
+- AppNav shows user email + sign out
+- Added USDA FSIS Recalls as 7th ingestion source
+
+**Why:** Auth is the foundation for multi-tenancy. Without it, we can't scope data to companies or build the config/alert UIs against real user sessions.
+
+---
+
 ## 2026-04-05 — All 6 Regulatory Sources Live
 
 **What changed:**
