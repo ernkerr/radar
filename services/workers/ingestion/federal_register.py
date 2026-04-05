@@ -29,16 +29,14 @@ class FederalRegisterIngester(BaseIngester):
 
         for keyword in self.KEYWORDS:
             url = f"{settings.federal_register_base_url}/documents.json"
-            params = {
-                "per_page": 20,
-                "order": "newest",
-                "conditions[term]": keyword,
-                "conditions[agencies][]": self.AGENCIES,
-                "fields[]": [
-                    "document_number", "title", "type", "abstract",
-                    "publication_date", "agencies", "html_url",
-                ],
-            }
+            params = [
+                ("per_page", "20"),
+                ("order", "newest"),
+                ("conditions[term]", keyword),
+            ]
+            for field in ["document_number", "title", "type", "abstract",
+                          "publication_date", "agencies", "html_url"]:
+                params.append(("fields[]", field))
 
             response = httpx.get(url, params=params, timeout=30)
             response.raise_for_status()
