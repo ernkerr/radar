@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AppNav } from "@/components/layout/AppNav";
 import { Building2, Truck, Fish, Globe } from "lucide-react";
 
@@ -140,10 +141,15 @@ function ProductsConfig() {
 function SourcesConfig() {
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-2">Monitored Sources</h2>
-      <p className="text-sm text-[var(--muted-foreground)] mb-4">
-        Regulatory data sources that Radar monitors on your behalf.
-      </p>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold">Monitored Sources</h2>
+          <p className="text-sm text-[var(--muted-foreground)]">Regulatory data sources that Radar monitors on your behalf.</p>
+        </div>
+        <Link href="/config/ingestion" className="bg-white text-sm font-medium px-4 py-2 rounded-md border border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
+          Ingestion Monitor
+        </Link>
+      </div>
       <div className="space-y-3">
         {[
           { name: "Federal Register", type: "API", schedule: "Every 2 hours", status: "active" },
