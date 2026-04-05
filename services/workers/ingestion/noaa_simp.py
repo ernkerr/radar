@@ -22,8 +22,12 @@ class NOAASIMPIngester(BaseIngester):
             "label": "SIMP Main Page",
         },
         {
-            "url": "https://www.fisheries.noaa.gov/international/international-affairs/simp-species-list",
-            "label": "SIMP Species List",
+            "url": "https://www.fisheries.noaa.gov/international/international-affairs/seafood-import-monitoring-program-essential-forms-and-documents",
+            "label": "SIMP Essential Forms and Documents",
+        },
+        {
+            "url": "https://www.fisheries.noaa.gov/international/international-affairs/seafood-import-monitoring-program-facts-and-reports",
+            "label": "SIMP Facts and Reports",
         },
     ]
 
