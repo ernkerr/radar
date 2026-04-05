@@ -215,5 +215,8 @@ create index idx_audit_company on audit_log(company_id, created_at desc);
 
 insert into sources (id, name, source_type, url, schedule_cron) values
   ('federal_register', 'Federal Register', 'api', 'https://www.federalregister.gov/api/v1', '0 */2 * * *'),
-  ('fda_import_alerts', 'FDA Import Alerts', 'page_monitor', 'https://www.fda.gov/industry/import-alerts/import-alert-16', '0 * * * *'),
-  ('noaa_simp', 'NOAA SIMP', 'page_monitor', 'https://www.fisheries.noaa.gov/international/international-affairs/seafood-import-monitoring-program', '0 */6 * * *');
+  ('fda_import_alerts', 'FDA Import Alerts', 'api', 'https://api.fda.gov/food/enforcement.json', '0 * * * *'),
+  ('noaa_simp', 'NOAA SIMP', 'page_monitor', 'https://www.fisheries.noaa.gov/international/international-affairs/seafood-import-monitoring-program', '0 */6 * * *'),
+  ('fda_rss', 'FDA RSS Feeds', 'rss', 'https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/food-safety-recalls/rss.xml', '0 * * * *'),
+  ('cbp_wro', 'CBP Withhold Release Orders', 'page_monitor', 'https://www.cbp.gov/newsroom/stats/trade/withhold-release-orders-findings-dashboard', '0 */6 * * *'),
+  ('noaa_mmpa', 'NOAA MMPA Import Provisions', 'page_monitor', 'https://www.fisheries.noaa.gov/foreign/marine-mammal-protection/mmpa-import-provisions-rule', '0 */12 * * *');

@@ -197,6 +197,145 @@ def fetch_fda_import_alerts():
 
 
 # ============================================================
+# FDA RSS FEEDS (Food Safety Recalls + Outbreaks)
+# ============================================================
+
+FDA_RSS_FEEDS = [
+    {
+        "id": "fda_food_safety_recalls",
+        "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/food-safety-recalls/rss.xml",
+        "label": "FDA Food Safety Recalls",
+    },
+    {
+        "id": "fda_outbreaks",
+        "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/fda-outbreaks/rss.xml",
+        "label": "FDA Outbreaks",
+    },
+]
+
+
+def fetch_fda_rss():
+    import feedparser
+    records = []
+    for feed_info in FDA_RSS_FEEDS:
+        print(f"  Feed: {feed_info['label']}")
+        feed = feedparser.parse(feed_info["url"])
+        print(f"    Entries: {len(feed.entries)}")
+        for entry in feed.entries:
+            records.append({
+                "external_id": entry.get("id") or entry.get("link"),
+                "raw_content": json.dumps({
+                    "title": entry.get("title"),
+                    "summary": entry.get("summary"),
+                    "link": entry.get("link"),
+                    "published": entry.get("published"),
+                }),
+                "metadata_json": {
+                    "title": entry.get("title", "")[:200],
+                    "link": entry.get("link"),
+                    "published": entry.get("published"),
+                    "feed": feed_info["label"],
+                },
+            })
+    return records
+
+
+# ============================================================
+# CBP WITHHOLD RELEASE ORDERS (Forced Labor)
+# ============================================================
+
+CBP_WRO_URL = "https://www.cbp.gov/newsroom/stats/trade/withhold-release-orders-findings-dashboard"
+
+
+def fetch_cbp_wro():
+    print(f"  Page: {CBP_WRO_URL}")
+    resp = httpx.get(CBP_WRO_URL, timeout=30, follow_redirects=True)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "lxml")
+    main = soup.find("main") or soup.find("article") or soup
+    content = main.get_text(separator="\n", strip=True)
+
+    # Also try to find any data tables on the page
+    tables = soup.find_all("table")
+    table_data = []
+    for table in tables:
+        rows = table.find_all("tr")
+        for row in rows:
+            cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if cells:
+                table_data.append(cells)
+
+    records = [{
+        "external_id": CBP_WRO_URL,
+        "raw_content": content,
+        "metadata_json": {
+            "url": CBP_WRO_URL,
+            "label": "CBP Withhold Release Orders Dashboard",
+            "html_length": len(resp.text),
+            "tables_found": len(tables),
+            "table_rows": len(table_data),
+        },
+    }]
+
+    # If we found table data, store each row as a separate record
+    if table_data and len(table_data) > 1:
+        headers = table_data[0]
+        for row in table_data[1:]:
+            row_dict = dict(zip(headers, row)) if len(row) == len(headers) else {"data": row}
+            records.append({
+                "external_id": f"cbp_wro_{hashlib.md5(str(row).encode()).hexdigest()[:12]}",
+                "raw_content": json.dumps(row_dict),
+                "metadata_json": {
+                    "source": "CBP WRO Dashboard Table",
+                    **row_dict,
+                },
+            })
+
+    print(f"  Found {len(records)} records ({len(tables)} tables, {len(table_data)} rows)")
+    return records
+
+
+# ============================================================
+# NOAA MMPA IMPORT PROVISIONS
+# ============================================================
+
+MMPA_PAGES = [
+    {
+        "url": "https://www.fisheries.noaa.gov/content/noaa-fisheries-establishes-international-marine-mammal-bycatch-criteria-us-imports",
+        "label": "MMPA Bycatch Criteria for US Imports",
+    },
+    {
+        "url": "https://www.fisheries.noaa.gov/international-affairs/2025-marine-mammal-protection-act-comparability-finding-determinations",
+        "label": "MMPA 2025 Comparability Findings",
+    },
+]
+
+
+def fetch_noaa_mmpa():
+    records = []
+    for page in MMPA_PAGES:
+        print(f"  Page: {page['label']}")
+        try:
+            resp = httpx.get(page["url"], timeout=30, follow_redirects=True)
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.text, "lxml")
+            main = soup.find("main") or soup.find("article") or soup
+            content = main.get_text(separator="\n", strip=True)
+            records.append({
+                "external_id": page["url"],
+                "raw_content": content,
+                "metadata_json": {
+                    "label": page["label"],
+                    "url": page["url"],
+                    "html_length": len(resp.text),
+                },
+            })
+        except httpx.HTTPError as e:
+            print(f"    Skipped: {e}")
+    return records
+
+
+# ============================================================
 # MAIN
 # ============================================================
 
@@ -204,6 +343,9 @@ SOURCES = {
     "federal_register": fetch_federal_register,
     "noaa_simp": fetch_noaa_simp,
     "fda_import_alerts": fetch_fda_import_alerts,
+    "fda_rss": fetch_fda_rss,
+    "cbp_wro": fetch_cbp_wro,
+    "noaa_mmpa": fetch_noaa_mmpa,
 }
 
 if __name__ == "__main__":
