@@ -27,25 +27,26 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
 
-    // Step 1: Create the auth user in Supabase Auth (auth.users table).
-    // This only handles authentication identity -- no application data yet.
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      // Step 1: Create the auth user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
-      return;
-    }
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
 
-    // Step 2: Create the company and user record in the application tables.
-    // This is done via an API route (/api/auth/setup) because the client-side
-    // Supabase client uses the anon key, which is subject to RLS policies that
-    // would block these inserts. The API route uses the service role key to
-    // bypass RLS and create the records.
-    if (authData.user) {
+      if (!authData.user) {
+        setError("Signup succeeded but no user was returned. Check Supabase email confirmation settings.");
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Create company + user record via API route
       const res = await fetch("/api/auth/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,10 +63,27 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-    }
 
-    // Both steps succeeded -- redirect to the dashboard.
-    router.push("/dashboard");
+      // Step 3: Sign in to create the session
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        setError(`Account created but auto-login failed: ${signInError.message}. Please sign in manually.`);
+        setLoading(false);
+        return;
+      }
+
+      // Redirect with full page load so middleware picks up cookies
+      window.location.href = "/dashboard";
+
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError(`Unexpected error: ${err}`);
+      setLoading(false);
+    }
   }
 
   return (
