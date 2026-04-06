@@ -30,50 +30,55 @@ const ROLE_OPTIONS = [
 // SIMP-covered species are defined by NOAA under the Seafood Import Monitoring
 // Program. If a species is SIMP-covered, importers must provide additional
 // traceability data (harvest info, chain of custody) at entry.
+// Species database — the `common` field includes well-known alternative names
+// in parentheses so users can find species by whatever name they're familiar
+// with. Typing "mahi" matches "Dolphinfish (Mahi-Mahi)", typing "prawns"
+// matches "Shrimp (Prawns)", etc. The full `common` string is what gets saved
+// and what the relevance engine matches against regulatory documents.
 const SPECIES_DB: { common: string; scientific: string; simp: boolean }[] = [
   // SIMP-covered species (per NOAA final rule)
   { common: "Abalone", scientific: "Haliotis spp.", simp: true },
-  { common: "Atlantic Cod", scientific: "Gadus morhua", simp: true },
+  { common: "Atlantic Cod (Codfish)", scientific: "Gadus morhua", simp: true },
   { common: "Pacific Cod", scientific: "Gadus macrocephalus", simp: true },
   { common: "Blue Crab", scientific: "Callinectes sapidus", simp: true },
-  { common: "King Crab", scientific: "Paralithodes spp.", simp: true },
+  { common: "King Crab (Alaskan King Crab)", scientific: "Paralithodes spp.", simp: true },
   { common: "Dolphinfish (Mahi-Mahi)", scientific: "Coryphaena hippurus", simp: true },
   { common: "Grouper", scientific: "Epinephelinae spp.", simp: true },
   { common: "Red Snapper", scientific: "Lutjanus campechanus", simp: true },
   { common: "Sea Cucumber", scientific: "Holothuroidea spp.", simp: true },
   { common: "Sharks", scientific: "Selachimorpha spp.", simp: true },
-  { common: "Shrimp", scientific: "Penaeidae spp.", simp: true },
-  { common: "Swordfish", scientific: "Xiphias gladius", simp: true },
+  { common: "Shrimp (Prawns)", scientific: "Penaeidae spp.", simp: true },
+  { common: "Swordfish (Broadbill)", scientific: "Xiphias gladius", simp: true },
   { common: "Albacore Tuna", scientific: "Thunnus alalunga", simp: true },
   { common: "Bigeye Tuna", scientific: "Thunnus obesus", simp: true },
   { common: "Bluefin Tuna", scientific: "Thunnus thynnus", simp: true },
   { common: "Skipjack Tuna", scientific: "Katsuwonus pelamis", simp: true },
-  { common: "Yellowfin Tuna", scientific: "Thunnus albacares", simp: true },
+  { common: "Yellowfin Tuna (Ahi)", scientific: "Thunnus albacares", simp: true },
   // Common non-SIMP species
   { common: "Atlantic Salmon", scientific: "Salmo salar", simp: false },
-  { common: "Arctic Charr", scientific: "Salvelinus alpinus", simp: false },
+  { common: "Arctic Charr (Char)", scientific: "Salvelinus alpinus", simp: false },
   { common: "Haddock", scientific: "Melanogrammus aeglefinus", simp: false },
   { common: "Halibut", scientific: "Hippoglossus hippoglossus", simp: false },
-  { common: "Branzino", scientific: "Dicentrarchus labrax", simp: false },
-  { common: "Daurade", scientific: "Sparus aurata", simp: false },
+  { common: "Branzino (European Sea Bass)", scientific: "Dicentrarchus labrax", simp: false },
+  { common: "Daurade (Dorade, Gilt-Head Bream)", scientific: "Sparus aurata", simp: false },
   { common: "Dover Sole", scientific: "Solea solea", simp: false },
-  { common: "Saithe", scientific: "Pollachius virens", simp: false },
-  { common: "Wolffish", scientific: "Anarhichas lupus", simp: false },
+  { common: "Saithe (Coalfish, Coley)", scientific: "Pollachius virens", simp: false },
+  { common: "Wolffish (Ocean Catfish)", scientific: "Anarhichas lupus", simp: false },
   { common: "Oysters", scientific: "Crassostrea spp.", simp: false },
   { common: "Mussels", scientific: "Mytilus spp.", simp: false },
   { common: "Scallops", scientific: "Pecten spp.", simp: false },
-  { common: "Clams", scientific: "Mercenaria mercenaria", simp: false },
+  { common: "Clams (Quahog)", scientific: "Mercenaria mercenaria", simp: false },
   { common: "Squid", scientific: "Loligo spp.", simp: false },
   { common: "Octopus", scientific: "Octopus vulgaris", simp: false },
-  { common: "Lobster", scientific: "Homarus americanus", simp: false },
+  { common: "Lobster (Maine Lobster)", scientific: "Homarus americanus", simp: false },
   { common: "Tilapia", scientific: "Oreochromis spp.", simp: false },
   { common: "Catfish", scientific: "Ictalurus punctatus", simp: false },
-  { common: "Pollock", scientific: "Pollachius pollachius", simp: false },
-  { common: "Sardines", scientific: "Sardina pilchardus", simp: false },
+  { common: "Pollock (Alaska Pollock)", scientific: "Pollachius pollachius", simp: false },
+  { common: "Sardines (Pilchard)", scientific: "Sardina pilchardus", simp: false },
   { common: "Anchovies", scientific: "Engraulis encrasicolus", simp: false },
   { common: "Mackerel", scientific: "Scomber scombrus", simp: false },
   { common: "Herring", scientific: "Clupea harengus", simp: false },
-  { common: "Trout", scientific: "Oncorhynchus mykiss", simp: false },
+  { common: "Trout (Rainbow Trout, Steelhead)", scientific: "Oncorhynchus mykiss", simp: false },
 ];
 
 type Tab = "company" | "suppliers" | "products" | "sources";
