@@ -1,3 +1,9 @@
+// Config page -- lets users manage their company profile, suppliers, products,
+// and view monitored sources. Each section is rendered as a tab.
+// - CompanyConfig: reads/writes the companies table (name + settings_json)
+// - SuppliersConfig: CRUD on the suppliers table (scoped by company_id)
+// - ProductsConfig: CRUD on the products table (scoped by company_id)
+// - SourcesConfig: read-only view of the global sources table (not company-scoped)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +15,7 @@ import { Building2, Truck, Fish, Globe, Plus, Trash2 } from "lucide-react";
 
 type Tab = "company" | "suppliers" | "products" | "sources";
 
+// Tab definitions with icons. Each tab renders a different config sub-component.
 const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "company", label: "Company", icon: Building2 },
   { id: "suppliers", label: "Suppliers", icon: Truck },
@@ -19,8 +26,13 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
 export default function ConfigPage() {
   const [activeTab, setActiveTab] = useState<Tab>("company");
   const { user } = useAuth();
+  // companyId is resolved from the authenticated user's record in the users
+  // table. All company-scoped config tabs (company, suppliers, products) need
+  // this ID to read/write the correct rows. Sources are global and don't need it.
   const [companyId, setCompanyId] = useState<string | null>(null);
 
+  // Look up the current user's company_id from the users table.
+  // This runs once after the auth hook resolves the user.
   useEffect(() => {
     if (!user) return;
     supabase
@@ -33,6 +45,8 @@ export default function ConfigPage() {
       });
   }, [user]);
 
+  // Don't render anything until we know the companyId -- the child components
+  // all depend on it for their queries.
   if (!companyId) return null;
 
   return (
@@ -70,6 +84,9 @@ export default function ConfigPage() {
 // ============================================================
 // COMPANY
 // ============================================================
+// Reads and saves the company's name and settings_json to the companies table.
+// settings_json stores freeform context (headquarters, regions, roles) that
+// the analysis pipeline uses to determine which regulatory changes are relevant.
 
 function CompanyConfig({ companyId }: { companyId: string }) {
   const [name, setName] = useState("");
@@ -129,6 +146,9 @@ function CompanyConfig({ companyId }: { companyId: string }) {
 // ============================================================
 // SUPPLIERS
 // ============================================================
+// Full CRUD on the suppliers table, scoped to the current company_id.
+// Supplier country and certifications are used by the analysis pipeline
+// to match alerts against the user's supply chain.
 
 function SuppliersConfig({ companyId }: { companyId: string }) {
   const [suppliers, setSuppliers] = useState<any[]>([]);
@@ -211,6 +231,9 @@ function SuppliersConfig({ companyId }: { companyId: string }) {
 // ============================================================
 // PRODUCTS
 // ============================================================
+// Full CRUD on the products table, scoped to the current company_id.
+// Product species, origin, and SIMP coverage status are used by the
+// analysis pipeline for regulatory rule matching.
 
 function ProductsConfig({ companyId }: { companyId: string }) {
   const [products, setProducts] = useState<any[]>([]);
@@ -309,6 +332,10 @@ function ProductsConfig({ companyId }: { companyId: string }) {
 // ============================================================
 // SOURCES (read from Supabase)
 // ============================================================
+// Read-only view of the global sources table. Sources are shared across all
+// companies (not scoped by company_id) because they represent regulatory data
+// feeds (e.g. FDA, NOAA) that are the same for everyone. Users cannot add or
+// remove sources from this UI -- they are managed by the platform operators.
 
 function SourcesConfig() {
   const [sources, setSources] = useState<any[]>([]);
@@ -354,6 +381,8 @@ function SourcesConfig() {
 // ============================================================
 // SHARED
 // ============================================================
+// Reusable text input field component used across all config tabs.
+// Keeps form markup consistent and reduces repetition.
 
 function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (

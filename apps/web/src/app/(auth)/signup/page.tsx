@@ -1,3 +1,12 @@
+// Signup page -- implements a two-step account creation flow:
+// Step 1: Create the Supabase Auth user (email + password) using the client-side
+//         anon key. This only creates the auth.users record in Supabase Auth.
+// Step 2: Call the /api/auth/setup API route to create the company and public.users
+//         records. This must happen server-side via API route because:
+//         - The public.users and companies tables have RLS policies that prevent
+//           unauthenticated inserts.
+//         - The API route uses the SUPABASE_SERVICE_ROLE_KEY to bypass RLS,
+//           which must never be exposed to the browser.
 "use client";
 
 import { useState } from "react";
@@ -18,7 +27,8 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
 
-    // 1. Create the auth user
+    // Step 1: Create the auth user in Supabase Auth (auth.users table).
+    // This only handles authentication identity -- no application data yet.
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -30,8 +40,11 @@ export default function SignupPage() {
       return;
     }
 
-    // 2. Create the company and user record
-    // Using service-role would be better here, but for now we'll use an API route
+    // Step 2: Create the company and user record in the application tables.
+    // This is done via an API route (/api/auth/setup) because the client-side
+    // Supabase client uses the anon key, which is subject to RLS policies that
+    // would block these inserts. The API route uses the service role key to
+    // bypass RLS and create the records.
     if (authData.user) {
       const res = await fetch("/api/auth/setup", {
         method: "POST",
@@ -51,6 +64,7 @@ export default function SignupPage() {
       }
     }
 
+    // Both steps succeeded -- redirect to the dashboard.
     router.push("/dashboard");
   }
 

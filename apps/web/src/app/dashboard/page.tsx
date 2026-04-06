@@ -1,3 +1,6 @@
+// Dashboard page -- the main landing view after login.
+// Displays summary stats (active alerts, pending actions, monitored sources)
+// and a table of recently ingested documents.
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,14 +10,21 @@ import { supabase } from "@/lib/supabase";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  // Stats holds the three summary counts shown in the stat cards.
   const [stats, setStats] = useState({ alerts: 0, actions: 0, sources: 0 });
+  // Recent raw_documents rows joined with their source name.
   const [documents, setDocuments] = useState<any[]>([]);
+  // The company name displayed beneath the page title.
   const [companyName, setCompanyName] = useState("");
 
   useEffect(() => {
+    // Wait until the auth hook resolves the current user before querying.
     if (!user) return;
 
-    // Get company name
+    // Look up the company name for the current user. This performs a join:
+    // users -> companies via the company_id foreign key. Supabase's
+    // `select("company_id, companies(name)")` syntax follows the FK
+    // relationship and returns `{ companies: { name: "..." } }`.
     supabase
       .from("users")
       .select("company_id, companies(name)")
@@ -24,18 +34,25 @@ export default function DashboardPage() {
         if (data?.companies?.name) setCompanyName(data.companies.name);
       });
 
-    // Get counts
+    // Load the three summary counts in parallel. Each query uses
+    // `{ count: "exact" }` to ask Postgres for a COUNT(*) without
+    // returning full rows -- just the count value.
+    // Sources count: total number of monitored data sources (no filter).
     supabase.from("sources").select("id", { count: "exact" }).then(({ count }) => {
       setStats((s) => ({ ...s, sources: count || 0 }));
     });
+    // Alerts count: only alerts with status "new" (unacknowledged).
     supabase.from("alerts").select("id", { count: "exact" }).eq("status", "new").then(({ count }) => {
       setStats((s) => ({ ...s, alerts: count || 0 }));
     });
+    // Actions count: only actions awaiting human approval.
     supabase.from("actions").select("id", { count: "exact" }).eq("status", "pending").then(({ count }) => {
       setStats((s) => ({ ...s, actions: count || 0 }));
     });
 
-    // Get recent documents with source name
+    // Fetch the 20 most recent raw_documents, joined with the source table
+    // to get the human-readable source name (e.g. "NOAA Fisheries").
+    // The `sources(name)` syntax tells Supabase to follow the source_id FK.
     supabase
       .from("raw_documents")
       .select("id, source_id, external_id, metadata_json, fetched_at, sources(name)")
@@ -75,6 +92,10 @@ export default function DashboardPage() {
               </div>
             ) : (
               documents.map((doc) => {
+                // Extract a human-readable title from the document's metadata_json.
+                // Different sources store titles under different keys, so we try
+                // several common fields in priority order before falling back to
+                // the external_id (the source's own identifier for this document).
                 const meta = doc.metadata_json || {};
                 const title = meta.title || meta.product_description || meta.label || doc.external_id || "—";
                 return (
@@ -102,6 +123,8 @@ export default function DashboardPage() {
   );
 }
 
+// Simple presentational card used for the three summary metrics at the top
+// of the dashboard (Active Alerts, Pending Actions, Sources Monitored).
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-white rounded-lg border border-[var(--border)] p-6">

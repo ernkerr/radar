@@ -1,3 +1,10 @@
+// Ingestion monitor page -- shows the health and history of data ingestion runs.
+// This page reads from two global (non-company-scoped) tables:
+// - sources: the list of regulatory data feeds (FDA, NOAA, etc.)
+// - ingestion_log: a record of each scraper/fetcher run with status, timing, and counts
+// These tables have no company_id column because ingestion is shared infrastructure --
+// the same sources are scraped once and the resulting documents are analyzed
+// per-company by the alert pipeline.
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { ArrowLeft, CheckCircle2, XCircle, Clock, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
+// Matches the ingestion_log table schema. Each row represents one scraper run.
 type IngestionRun = {
   id: string;
   source_id: string;
@@ -16,6 +24,7 @@ type IngestionRun = {
   ran_at: string;
 };
 
+// Matches the sources table schema (subset of columns used here).
 type Source = {
   id: string;
   name: string;
@@ -27,6 +36,8 @@ type Source = {
 export default function IngestionMonitorPage() {
   const [sources, setSources] = useState<Source[]>([]);
   const [runs, setRuns] = useState<IngestionRun[]>([]);
+  // When a source card is clicked, selectedSource is set to that source's ID
+  // to filter the run history table below. Clicking again deselects (shows all).
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +45,8 @@ export default function IngestionMonitorPage() {
     loadData();
   }, []);
 
+  // Fetches both tables in parallel. No company_id filter is applied because
+  // sources and ingestion_log are global/shared tables.
   async function loadData() {
     setLoading(true);
     const [sourcesRes, runsRes] = await Promise.all([
@@ -45,13 +58,18 @@ export default function IngestionMonitorPage() {
     setLoading(false);
   }
 
+  // Client-side filtering: if a source card is selected, only show that source's runs.
   const filteredRuns = selectedSource
     ? runs.filter((r) => r.source_id === selectedSource)
     : runs;
 
+  // Helper to resolve a source_id to its human-readable name for the table.
   const getSourceName = (id: string) =>
     sources.find((s) => s.id === id)?.name ?? id;
 
+  // Computes per-source statistics from the loaded runs for the source cards.
+  // Counts successes, failures, total runs, and identifies the most recent run
+  // (runs are already sorted by ran_at desc, so [0] is the latest).
   const getSourceStats = (sourceId: string) => {
     const sourceRuns = runs.filter((r) => r.source_id === sourceId);
     const lastRun = sourceRuns[0];
