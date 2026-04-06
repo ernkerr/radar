@@ -58,14 +58,31 @@ def dispatch(db: Client, company_id: str, change: dict, relevance: dict, raw_doc
         "urgency": relevance.get("urgency", "LOW"),      # Triage level
         "matched_rules": relevance.get("matched_rules", []),  # Audit trail of which rules fired
         "llm_reasoning": relevance.get("llm_reasoning"),  # LLM explanation (None if rules-only)
-        "status": "new",  # Lifecycle: new -> acknowledged -> resolved
+        # D17: "needs_review" alerts get a special status so the UI can
+        # highlight them differently (e.g., amber "Review needed" badge).
+        "status": "needs_review" if relevance.get("needs_review") else "new",
     }
 
     alert = db.table("alerts").insert(alert_data).execute().data[0]
 
-    # ── Propose actions based on urgency and matched rules ──
-    # Actions are *proposals*, not executions.  They sit in "pending" status
-    # until a human approves them (see requires_approval below).
+    # D17: Only propose automated actions for CONFIDENT matches.
+    # Ambiguous matches (needs_review=True) get a single "manual review" task.
+    # We don't want to propose an inventory hold or supplier outreach based on
+    # something we're not sure about — that could cost the company money or
+    # damage supplier relationships for no reason.
+    if relevance.get("needs_review"):
+        db.table("actions").insert({
+            "company_id": company_id,
+            "alert_id": alert["id"],
+            "action_type": "task",
+            "description": "Manual review required — system could not confidently determine relevance. Please review this regulatory change and decide if action is needed.",
+            "payload_json": {"reason": "ambiguous_match", "confidence": relevance.get("confidence", "low")},
+            "requires_approval": True,
+            "status": "pending",
+        }).execute()
+        return {"alert_id": alert["id"], "actions_created": 1}
+
+    # ── Confident match — propose actions based on urgency and rules ──
     actions = _propose_actions(relevance, meta, raw_doc)
     actions_created = 0
 
@@ -73,16 +90,14 @@ def dispatch(db: Client, company_id: str, change: dict, relevance: dict, raw_doc
         db.table("actions").insert({
             "company_id": company_id,
             "alert_id": alert["id"],
-            "action_type": action["type"],       # One of: task, outreach, hold, erp_update
+            "action_type": action["type"],
             "description": action["description"],
-            "payload_json": action.get("payload", {}),  # Machine-readable params for execution
-            # D4 design decision: requires_approval defaults to True.
-            # The system should NEVER auto-execute actions without human
-            # review.  Regulatory compliance errors can have serious legal
-            # and financial consequences, so a human must confirm before
-            # any outreach is sent, shipments are held, or ERP flags change.
+            "payload_json": action.get("payload", {}),
+            # D4: requires_approval defaults to True. The system should NEVER
+            # auto-execute without human review. Compliance errors have serious
+            # legal and financial consequences.
             "requires_approval": True,
-            "status": "pending",  # Lifecycle: pending -> approved -> executed (or rejected)
+            "status": "pending",
         }).execute()
         actions_created += 1
 
