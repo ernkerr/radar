@@ -382,15 +382,31 @@ SOURCES = {
     "usda_fsis": fetch_usda_fsis,
 }
 
+def run_pipeline_for_source(source_id: str, use_llm: bool = False):
+    """Run the P1 pipeline: detect changes → analyze relevance → dispatch alerts."""
+    from agents.pipeline import run_pipeline
+    result = run_pipeline(db, source_id, use_llm=use_llm)
+    return result
+
+
 if __name__ == "__main__":
     target = sys.argv[1] if len(sys.argv) > 1 else "all"
 
-    if target == "all":
+    if target == "pipeline":
+        # Run pipeline for all sources (or specific one)
+        source = sys.argv[2] if len(sys.argv) > 2 else "all"
+        use_llm = "--llm" in sys.argv
+        if source == "all":
+            for sid in SOURCES:
+                run_pipeline_for_source(sid, use_llm)
+        else:
+            run_pipeline_for_source(source, use_llm)
+    elif target == "all":
         for source_id, fetch_fn in SOURCES.items():
             run_source(source_id, fetch_fn)
     elif target in SOURCES:
         run_source(target, SOURCES[target])
     else:
-        print(f"Unknown source: {target}")
-        print(f"Available: {', '.join(SOURCES.keys())}, all")
+        print(f"Unknown command: {target}")
+        print(f"Available: {', '.join(SOURCES.keys())}, all, pipeline")
         sys.exit(1)

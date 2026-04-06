@@ -1,3 +1,6 @@
+// Login page -- handles email/password authentication via Supabase Auth.
+// This page is in the (auth) route group, which uses a layout without the
+// AppNav since unauthenticated users should not see the main navigation.
 "use client";
 
 import { useState } from "react";
@@ -9,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // Error message from Supabase (e.g. "Invalid login credentials").
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,15 +21,21 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
+    // signInWithPassword authenticates against Supabase Auth using email + password.
+    // On success, Supabase sets session cookies automatically (handled by the
+    // Supabase JS client), which the middleware will read on subsequent requests.
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
+      // Display the error message from Supabase (e.g. wrong password, user not found).
       setError(error.message);
       setLoading(false);
     } else {
+      // On successful login, redirect to the dashboard. The middleware will
+      // now allow access since a valid session cookie exists.
       router.push("/dashboard");
     }
   }

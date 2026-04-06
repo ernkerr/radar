@@ -1,3 +1,12 @@
+// Signup page -- implements a two-step account creation flow:
+// Step 1: Create the Supabase Auth user (email + password) using the client-side
+//         anon key. This only creates the auth.users record in Supabase Auth.
+// Step 2: Call the /api/auth/setup API route to create the company and public.users
+//         records. This must happen server-side via API route because:
+//         - The public.users and companies tables have RLS policies that prevent
+//           unauthenticated inserts.
+//         - The API route uses the SUPABASE_SERVICE_ROLE_KEY to bypass RLS,
+//           which must never be exposed to the browser.
 "use client";
 
 import { useState } from "react";
@@ -18,21 +27,26 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
 
-    // 1. Create the auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      // Step 1: Create the auth user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
-      return;
-    }
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
 
-    // 2. Create the company and user record
-    // Using service-role would be better here, but for now we'll use an API route
-    if (authData.user) {
+      if (!authData.user) {
+        setError("Signup succeeded but no user was returned. Check Supabase email confirmation settings.");
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Create company + user record via API route
       const res = await fetch("/api/auth/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,9 +63,27 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-    }
 
-    router.push("/dashboard");
+      // Step 3: Sign in to create the session
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        setError(`Account created but auto-login failed: ${signInError.message}. Please sign in manually.`);
+        setLoading(false);
+        return;
+      }
+
+      // Redirect with full page load so middleware picks up cookies
+      window.location.href = "/dashboard";
+
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError(`Unexpected error: ${err}`);
+      setLoading(false);
+    }
   }
 
   return (
