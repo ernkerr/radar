@@ -36,10 +36,12 @@ const urgencyColors = {
   LOW: "bg-gray-100 text-gray-600",
 };
 
-// Maps lifecycle statuses to Tailwind badge colors. "new" = blue to draw
+// Maps lifecycle statuses to Tailwind badge colors. "needs_review" = amber to
+// highlight ambiguous matches that need human judgment (D17). "new" = blue to draw
 // attention, "acknowledged" = yellow (in progress), "resolved" = green (done).
-const statusColors = {
+const statusColors: Record<string, string> = {
   new: "bg-blue-100 text-blue-700",
+  needs_review: "bg-orange-100 text-orange-700",
   acknowledged: "bg-yellow-100 text-yellow-700",
   resolved: "bg-green-100 text-green-700",
 };
@@ -120,7 +122,7 @@ export default function AlertsPage() {
             </button>
           ))}
           <span className="mx-2 text-[var(--border)]">|</span>
-          {["all", "new", "acknowledged", "resolved"].map((s) => (
+          {["all", "new", "needs_review", "acknowledged", "resolved"].map((s) => (
             <button
               key={s}
               onClick={() => setFilter({ ...filter, status: s })}

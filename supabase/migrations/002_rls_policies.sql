@@ -33,9 +33,12 @@ $$ language sql security definer stable;
 -- POLICIES
 -- ============================================================
 
--- Companies: users can only see their own company
+-- Companies: users can view and update their own company
 create policy "Users can view own company"
   on companies for select
+  using (id = public.get_company_id());
+create policy "Users can update own company"
+  on companies for update
   using (id = public.get_company_id());
 
 -- Users: can see other users in their company

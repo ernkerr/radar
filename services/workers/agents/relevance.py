@@ -51,65 +51,103 @@ def analyze_relevance(
     Returns:
         {
             "relevant": bool,
+            "needs_review": bool,       # D17: ambiguous matches surface for human review
+            "confidence": "high" | "medium" | "low",
             "score": float,
             "urgency": "HIGH" | "MEDIUM" | "LOW",
             "matched_rules": [...],
             "llm_reasoning": str | None,
             "why_it_matters": str,
         }
+
+    Three-state relevance model (D17):
+        - relevant=True,  needs_review=False → confident match, create alert + actions
+        - relevant=True,  needs_review=True  → ambiguous, create alert flagged for review, no auto-actions
+        - relevant=False, needs_review=False → confident non-match, skip
+
+    CRITICAL: We NEVER silently discard something we're unsure about (D17).
+    False negatives are more expensive than false positives — a missed
+    regulatory change on a large shipment can cost thousands of dollars.
+    When in doubt, we surface it for human review.
     """
     # ── Phase 1: Deterministic rule matching (always runs) ──
-    # Fast, free, and reproducible.  See rules.py for the five rules.
     rule_result = match_rules(db, company_id, change, raw_doc)
 
+    # ── Strong rule match (score >= 0.5) → confident relevant ──
     if rule_result["relevant"] and rule_result["score"] >= 0.5:
-        # Strong rule match (score >= 0.5 means multiple rules fired or a
-        # high-weight rule like supplier matched).  No need to spend money
-        # on an LLM call -- we are confident this is relevant.
         return {
             **rule_result,
+            "needs_review": False,
+            "confidence": "high",
             "llm_reasoning": None,
             "why_it_matters": _generate_rule_explanation(rule_result),
         }
 
     # ── Phase 2: LLM analysis for ambiguous / novel changes ──
-    # Only invoked when:
-    #   1. use_llm flag is True (caller opted in), AND
-    #   2. ANTHROPIC_API_KEY is set in the environment.
-    # If either condition is false, we skip straight to the fallback.
     if use_llm and os.environ.get("ANTHROPIC_API_KEY"):
         llm_result = _analyze_with_claude(db, company_id, change, raw_doc)
         if llm_result:
-            # ── Merge rule and LLM results ──
-            # Take the higher of the two scores so that partial rule matches
-            # still benefit from LLM confirmation, and vice versa.
             combined_score = max(rule_result["score"], llm_result["score"])
+            llm_confidence = llm_result.get("confidence", "low")
+
+            # LLM is confident it's relevant
+            if combined_score >= 0.5 and llm_confidence in ("high", "medium"):
+                return {
+                    "relevant": True,
+                    "needs_review": False,
+                    "confidence": llm_confidence,
+                    "score": combined_score,
+                    "urgency": llm_result["urgency"],
+                    "matched_rules": rule_result["matched_rules"],
+                    "llm_reasoning": llm_result["reasoning"],
+                    "why_it_matters": llm_result["why_it_matters"],
+                }
+
+            # LLM is confident it's NOT relevant
+            if combined_score < 0.2 and llm_confidence == "high":
+                return {
+                    "relevant": False,
+                    "needs_review": False,
+                    "confidence": "high",
+                    "score": combined_score,
+                    "urgency": "LOW",
+                    "matched_rules": rule_result["matched_rules"],
+                    "llm_reasoning": llm_result["reasoning"],
+                    "why_it_matters": "",
+                }
+
+            # D17: LLM is unsure → ALWAYS surface for human review.
+            # Never silently discard something ambiguous.
             return {
-                # A combined score > 0.2 is the threshold for "relevant".
-                # This is intentionally lower than the 0.5 rule-only
-                # threshold because the LLM provides semantic understanding
-                # that justifies a lower confidence bar.
-                "relevant": combined_score > 0.2,
+                "relevant": True,  # Treat as relevant so it shows up
+                "needs_review": True,
+                "confidence": "low",
                 "score": combined_score,
-                # Use the urgency from whichever source had the higher score,
-                # since that source had more confidence in its assessment.
-                "urgency": llm_result["urgency"] if llm_result["score"] > rule_result["score"] else rule_result["urgency"],
-                # Always include rule matches for auditability, even when
-                # the LLM drove the final decision.
+                "urgency": llm_result.get("urgency", "MEDIUM"),
                 "matched_rules": rule_result["matched_rules"],
-                "llm_reasoning": llm_result["reasoning"],
-                "why_it_matters": llm_result["why_it_matters"],
+                "llm_reasoning": llm_result.get("reasoning", "Ambiguous match — flagged for manual review"),
+                "why_it_matters": llm_result.get("why_it_matters", "This change could not be confidently classified. Please review manually."),
             }
 
-    # ── Fallback: rule result only ──
-    # Reached when: (a) LLM is disabled/unavailable, or (b) the LLM call
-    # failed (network error, rate limit, malformed response).
-    # We return whatever the rules found.  If no rules matched, the change
-    # is marked as not relevant (why_it_matters will be empty).
+    # ── Fallback: No LLM available ──
+    # Weak rule match (0 < score < 0.5) → flag for review (D17)
+    if rule_result["score"] > 0 and rule_result["score"] < 0.5:
+        return {
+            **rule_result,
+            "relevant": True,
+            "needs_review": True,
+            "confidence": "low",
+            "llm_reasoning": None,
+            "why_it_matters": _generate_rule_explanation(rule_result) + " (Low confidence — please verify manually.)",
+        }
+
+    # No rules matched at all → not relevant
     return {
         **rule_result,
+        "needs_review": False,
+        "confidence": "high",
         "llm_reasoning": None,
-        "why_it_matters": _generate_rule_explanation(rule_result) if rule_result["relevant"] else "",
+        "why_it_matters": "",
     }
 
 
@@ -173,13 +211,18 @@ COMPANY CONTEXT:
 REGULATORY CHANGE:
 {change_text}
 
+IMPORTANT: If you are unsure whether this change is relevant, you MUST say so.
+Do NOT guess. A missed regulatory change on a large shipment can cost thousands
+of dollars. When in doubt, set confidence to "low" so it gets flagged for human review.
+
 Respond in JSON format only:
 {{
     "relevant": true/false,
     "score": 0.0-1.0,
+    "confidence": "high" or "medium" or "low",
     "urgency": "HIGH" or "MEDIUM" or "LOW",
-    "reasoning": "brief explanation of why this is or isn't relevant",
-    "why_it_matters": "1-2 sentence plain English explanation for the compliance team"
+    "reasoning": "brief explanation of why this is or isn't relevant. If unsure, explain what information you'd need to be certain.",
+    "why_it_matters": "1-2 sentence plain English explanation for the compliance team. If unsure, say what they should check."
 }}"""
             }],
         )

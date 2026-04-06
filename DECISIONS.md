@@ -74,6 +74,15 @@ Decisions made during planning and development. Check this before executing on a
   - **Page monitoring**: NOAA SIMP, CBP WROs, NOAA MMPA, USDA FSIS Recalls
   - **Deferred**: FDA CSMS (email-only), FDA Import Refusals (fragile scraping), EU RASFF (unclear API), EPA Fish Advisories (annual/low priority), Health Canada (not relevant for US imports), NOAA Fisheries RSS (no RSS available, JS-rendered)
 
+### D17: Never assume — ambiguous matches must surface for human review
+- **Date**: 2026-04-06
+- **Decision**: The relevance engine must NEVER silently discard a change it's unsure about. Three states:
+  - **Relevant** (high confidence) → create alert + propose actions
+  - **Needs Review** (ambiguous) → create alert flagged for manual review, no auto-actions
+  - **Not Relevant** (high confidence) → skip
+  - If in doubt, default to "Needs Review". False negatives are more expensive than false positives — a missed regulatory change on a large shipment can cost thousands.
+  - The LLM must explicitly state its confidence level. If confidence is below a threshold, it must flag for review rather than deciding.
+
 ### D16: FDA switched from HTML scraping to openFDA API
 - **Date**: 2026-04-05
 - **Decision**: Original plan was to scrape FDA Import Alert 16-xx pages. Those URLs are now 404. Switched to the openFDA food/enforcement API which provides structured recall data. No auth required.
