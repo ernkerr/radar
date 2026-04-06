@@ -24,13 +24,16 @@ export default function DashboardPage() {
         if (data?.companies?.name) setCompanyName(data.companies.name);
       });
 
-    // Get source count
-    supabase
-      .from("sources")
-      .select("id", { count: "exact" })
-      .then(({ count }) => {
-        setStats((s) => ({ ...s, sources: count || 0 }));
-      });
+    // Get counts
+    supabase.from("sources").select("id", { count: "exact" }).then(({ count }) => {
+      setStats((s) => ({ ...s, sources: count || 0 }));
+    });
+    supabase.from("alerts").select("id", { count: "exact" }).eq("status", "new").then(({ count }) => {
+      setStats((s) => ({ ...s, alerts: count || 0 }));
+    });
+    supabase.from("actions").select("id", { count: "exact" }).eq("status", "pending").then(({ count }) => {
+      setStats((s) => ({ ...s, actions: count || 0 }));
+    });
 
     // Get recent documents with source name
     supabase
