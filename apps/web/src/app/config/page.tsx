@@ -12,6 +12,7 @@ import { AppNav } from "@/components/layout/AppNav";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Building2, Truck, Fish, Globe, Plus, Trash2, X } from "lucide-react";
+import { FormSkeleton, TableSkeleton, SourceListSkeleton, PageContentSkeleton } from "@/components/ui/skeletons";
 
 // Predefined options for structured inputs — prevents typos and inconsistencies.
 // These are used as suggestions but users can still type custom values.
@@ -108,10 +109,6 @@ export default function ConfigPage() {
       });
   }, [user]);
 
-  // Don't render anything until we know the companyId -- the child components
-  // all depend on it for their queries.
-  if (!companyId) return null;
-
   return (
     <div className="min-h-screen bg-[var(--muted)]">
       <AppNav />
@@ -122,6 +119,7 @@ export default function ConfigPage() {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
+              disabled={!companyId}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === id
                   ? "bg-[var(--accent)] text-white"
@@ -134,10 +132,16 @@ export default function ConfigPage() {
           ))}
         </div>
         <div className="bg-white rounded-lg border border-[var(--border)] p-6">
-          {activeTab === "company" && <CompanyConfig companyId={companyId} />}
-          {activeTab === "suppliers" && <SuppliersConfig companyId={companyId} />}
-          {activeTab === "products" && <ProductsConfig companyId={companyId} />}
-          {activeTab === "sources" && <SourcesConfig />}
+          {!companyId ? (
+            <PageContentSkeleton />
+          ) : (
+            <>
+              {activeTab === "company" && <CompanyConfig companyId={companyId} />}
+              {activeTab === "suppliers" && <SuppliersConfig companyId={companyId} />}
+              {activeTab === "products" && <ProductsConfig companyId={companyId} />}
+              {activeTab === "sources" && <SourcesConfig />}
+            </>
+          )}
         </div>
       </main>
     </div>
@@ -159,6 +163,7 @@ function CompanyConfig({ companyId }: { companyId: string }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase
@@ -175,8 +180,11 @@ function CompanyConfig({ companyId }: { companyId: string }) {
           setRegions(Array.isArray(s.operating_regions) ? s.operating_regions : (s.operating_regions || "").split(",").map((r: string) => r.trim()).filter(Boolean));
           setRoles(Array.isArray(s.roles) ? s.roles : (s.roles || "").split(",").map((r: string) => r.trim()).filter(Boolean));
         }
+        setLoading(false);
       });
   }, [companyId]);
+
+  if (loading) return <FormSkeleton fields={4} />;
 
   async function save() {
     setSaving(true);
@@ -222,12 +230,14 @@ function SuppliersConfig({ companyId }: { companyId: string }) {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", country: "" });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { load(); }, [companyId]);
 
   async function load() {
     const { data } = await supabase.from("suppliers").select("*").eq("company_id", companyId).order("name");
     if (data) setSuppliers(data);
+    setLoading(false);
   }
 
   async function add() {
@@ -245,6 +255,8 @@ function SuppliersConfig({ companyId }: { companyId: string }) {
     await supabase.from("suppliers").delete().eq("id", id);
     load();
   }
+
+  if (loading) return <TableSkeleton columns={3} rows={3} />;
 
   return (
     <div>
@@ -304,12 +316,14 @@ function ProductsConfig({ companyId }: { companyId: string }) {
   const [products, setProducts] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", species: "", scientific_name: "", origin: "", simp_covered: false, production_method: "" });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { load(); }, [companyId]);
 
   async function load() {
     const { data } = await supabase.from("products").select("*").eq("company_id", companyId).order("name");
     if (data) setProducts(data);
+    setLoading(false);
   }
 
   async function add() {
@@ -331,6 +345,8 @@ function ProductsConfig({ companyId }: { companyId: string }) {
     await supabase.from("products").delete().eq("id", id);
     load();
   }
+
+  if (loading) return <TableSkeleton columns={6} rows={3} />;
 
   return (
     <div>
@@ -425,12 +441,16 @@ function ProductsConfig({ companyId }: { companyId: string }) {
 
 function SourcesConfig() {
   const [sources, setSources] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.from("sources").select("*").order("name").then(({ data }) => {
       if (data) setSources(data);
+      setLoading(false);
     });
   }, []);
+
+  if (loading) return <SourceListSkeleton count={4} />;
 
   return (
     <div>

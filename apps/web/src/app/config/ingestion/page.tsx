@@ -12,6 +12,7 @@ import { AppNav } from "@/components/layout/AppNav";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, CheckCircle2, XCircle, Clock, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { CardGridSkeleton, TableSkeleton } from "@/components/ui/skeletons";
 
 // Matches the ingestion_log table schema. Each row represents one scraper run.
 type IngestionRun = {
@@ -97,7 +98,10 @@ export default function IngestionMonitorPage() {
         </div>
 
         {loading ? (
-          <div className="text-sm text-[var(--muted-foreground)]">Loading...</div>
+          <div className="space-y-8">
+            <CardGridSkeleton count={3} columns={3} />
+            <TableSkeleton columns={5} rows={5} />
+          </div>
         ) : (
           <>
             {/* Source cards */}

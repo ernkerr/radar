@@ -4,6 +4,20 @@ All significant codebase changes are documented here.
 
 ---
 
+## 2026-04-06 — Skeleton Loading States & Design System
+
+**What changed:**
+- Installed shadcn/ui (skeleton component, cn utility, Tailwind 4 theme bridge)
+- Added shimmer skeleton loading states to all config pages (Company, Suppliers, Products, Sources, Ingestion Monitor)
+- Created reusable skeleton pattern library: `FormSkeleton`, `TableSkeleton`, `CardGridSkeleton`, `SourceListSkeleton`, `PageContentSkeleton`
+- Config page now renders page shell (nav, heading, tabs) immediately instead of blank while loading
+- Added `SKELETONS.md` design system guide for adding skeletons to future components
+- Registered CSS variables with Tailwind 4's `@theme` system for shadcn compatibility
+
+**Why:** Config pages flashed empty content while data loaded from Supabase — misleading "No items" messages and blank screens. Skeleton design system ensures all future data-fetching components follow the same loading UX pattern.
+
+---
+
 ## 2026-04-06 — P1: Change Detection, Relevance Engine, Alerts & Actions
 
 **What changed:**

@@ -17,6 +17,9 @@ radar/
 │       │   │   └── layout.tsx      # Root layout with nav, auth provider
 │       │   ├── components/         # Shared React components
 │       │   │   ├── ui/             # Generic UI primitives (buttons, cards, badges)
+│       │   │   │   ├── skeleton.tsx     # shadcn/ui Skeleton base primitive (shimmer pulse)
+│       │   │   │   ├── skeletons.tsx    # Reusable skeleton patterns (FormSkeleton, TableSkeleton, etc.)
+│       │   │   │   └── SKELETONS.md    # Design system guide for adding skeletons to new components
 │       │   │   ├── alerts/         # Alert-specific components (feed, detail, severity badge)
 │       │   │   ├── actions/        # Action queue, approval buttons, execution status
 │       │   │   ├── config/         # Config panel sections (suppliers, products, sources)
