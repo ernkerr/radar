@@ -4,6 +4,23 @@ All significant codebase changes are documented here.
 
 ---
 
+## 2026-04-06 — P1: Change Detection, Relevance Engine, Alerts & Actions
+
+**What changed:**
+- Change detection engine compares ingestion runs and detects new/modified documents
+- Rule-based relevance matching: species, origin, supplier, SIMP cross-referencing
+- LLM relevance (Claude) for ambiguous changes (hybrid approach, D5)
+- Alert dispatch with proposed actions (review tasks, outreach, ERP updates, holds)
+- Alert feed UI with urgency/status filtering, expandable detail, acknowledge/resolve
+- Action queue with approve/reject workflow and approval records
+- Dashboard shows real alert + action counts
+- Seeded Aquanor with 3 suppliers, 11 products from demo data
+- Pipeline tested: 34 alerts, 39 actions generated from real regulatory data
+
+**Why:** P1 core is functionally complete. The system now detects regulatory changes, determines relevance to a company, generates alerts with context, and proposes actions for human approval.
+
+---
+
 ## 2026-04-06 — Auth, Config CRUD, Live Dashboard
 
 **What changed:**
